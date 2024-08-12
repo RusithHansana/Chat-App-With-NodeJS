@@ -3,6 +3,12 @@ const http = require("http");
 const express = require("express");
 const socketio = require("socket.io");
 const formatMessage = require("./utils/messageWrapper.js");
+const {
+  userJoin,
+  getCurrentUser,
+  userLeave,
+  getRoomUsers,
+} = require("./utils/users.js");
 
 const app = express();
 const server = http.createServer(app);
@@ -18,29 +24,53 @@ const serverBotName = "ChatCord Bot";
 io.on("connection", (socket) => {
   console.log("New client connection");
 
-  //Welcome current user
-  //socket.emit sends message to the client that is connecting
-  socket.emit("message", formatMessage(serverBotName, "Welcome to ChatCord"));
+  socket.on("joinRoom", ({ username, room }) => {
+    const user = userJoin(socket.id, username, room);
 
-  //Broadcast when a user connects
-  //socket.broadcast.emit sends message to all clients except the one that is connecting
-  socket.broadcast.emit(
-    "message",
-    formatMessage(serverBotName, "New User just joined the chat.")
-  );
+    socket.join(user.room);
 
-  //excute when client disconnects
-  socket.on("disconnect", () => {
-    //io.emit sends message to all clients
-    io.emit(
-      "message",
-      formatMessage(serverBotName, "A user has left the chat.")
-    );
+    //Welcome current user
+    //socket.emit sends message to the client that is connecting
+    socket.emit("message", formatMessage(serverBotName, "Welcome to ChatCord"));
+
+    //Broadcast when a user connects
+    //socket.broadcast.emit sends message to all clients except the one that is connecting
+    socket.broadcast
+      .to(user.room)
+      .emit(
+        "message",
+        formatMessage(serverBotName, `${user.username} just joined the chat.`)
+      );
+
+    //Send users and room info
+    io.to(user.room).emit("roomUsers", {
+      room: user.room,
+      users: getRoomUsers(user.room),
+    });
   });
 
   //Listen for chatMessage
   socket.on("chatMessage", (message) => {
-    io.emit("message", formatMessage("User", message));
+    const user = getCurrentUser(socket.id);
+
+    io.to(user.room).emit("message", formatMessage(user.username, message));
+  });
+
+  //excute when client disconnects
+  socket.on("disconnect", () => {
+    const user = userLeave(socket.id);
+
+    if (!user) return "User not found";
+    //io.emit sends message to all clients
+    io.emit(
+      "message",
+      formatMessage(serverBotName, `${user.username} has left the chat.`)
+    );
+
+    io.to(user.room).emit("roomUsers", {
+      room: user.room,
+      users: getRoomUsers(user.room),
+    });
   });
 });
 
