@@ -5,6 +5,7 @@ const dotenv = require("dotenv");
 
 const connectDB = require("./config/db.js");
 const authRoutes = require("./routes/authRoutes.js");
+const chatRoutes = require("./routes/chatRoutes.js");
 const chatSocket = require("./socket/chatSocket.js");
 
 dotenv.config();
@@ -22,6 +23,7 @@ app.use(express.static(path.join(__dirname, "public")));
 chatSocket(server); // Initialize Socket.IO
 
 app.use("/api/auth", authRoutes); // Use authentication routes
+app.use("/", chatRoutes); // Use chat routes
 
 app.get("/", (req, res) => {
   res.send("API is running");

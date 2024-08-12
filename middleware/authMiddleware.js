@@ -20,3 +20,5 @@ const verifyToken = (req, res, next) => {
     return res.status(500).send("Verification failed");
   }
 };
+
+module.exports = { verifyToken };

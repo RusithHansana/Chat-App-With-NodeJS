@@ -32,6 +32,12 @@ loginForm.addEventListener("submit", async function (event) {
     // Save the token in localStorage
     localStorage.setItem("token", result.token);
 
+    const chatURL = await fetch("http://localhost:3000/api/chat", {
+      headers: {
+        Authorization: `Bearer ${result.token}`,
+      },
+    });
+
     // Redirect to chat page
     window.location.href = `/chat.html?username=${username}&room=${room}`;
   } catch (error) {
