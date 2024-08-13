@@ -4,8 +4,6 @@ const { getChatPage } = require("../controllers/chatController"); // Ensure this
 
 const router = express.Router();
 
-console.log(getChatPage);
-
 // Protect the chat route with the verifyToken middleware
 router.get("/chat", verifyToken, getChatPage);
 
