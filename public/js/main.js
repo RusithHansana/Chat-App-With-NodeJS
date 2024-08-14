@@ -57,8 +57,8 @@ const addMessageToChat = (message) => {
 };
 
 //write roomname to DOM
-const writeRoomName = (room) => {
-  roomName.innerText = room;
+const writeRoomName = async (room) => {
+  roomName.innerText = await getRoomName(room);
 };
 
 //write users to DOM
@@ -66,4 +66,32 @@ const writeUsers = (users) => {
   userList.innerHTML = `
         ${users.map((user) => `<li>${user.username}</li>`).join("")}
     `;
+};
+
+const getRoomName = async (room) => {
+  if (!room) {
+    window.location.href = "index.html";
+    return;
+  }
+
+  const roomName = await fetch("http://localhost:3000/api/chatRooms/" + room, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + localStorage.getItem("token"),
+    },
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      data.messages.forEach((message) => {
+        addMessageToChat(message);
+      });
+      return data.roomName;
+    })
+    .catch((err) => {
+      console.error("Error:", err);
+      window.location.href = "index.html";
+    });
+
+  return roomName;
 };
